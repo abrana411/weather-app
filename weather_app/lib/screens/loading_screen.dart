@@ -17,6 +17,8 @@ class _LoadingState extends State<Loading> {
   void fetchData(String cityName) async {
     Data instance = Data(location: city);
     await instance.getData();
+    await instance.getForcast();
+    await instance.getAQI();
     Future.delayed(
         const Duration(seconds: 3),
         () => {
@@ -30,6 +32,16 @@ class _LoadingState extends State<Loading> {
                     "typeOfweather_val": instance.typeOfweather,
                     "iconWeather_val": instance.iconWeather,
                     "cityName_val": cityName,
+                    "forcastMax_val": instance
+                        .forcastMax, //if dont want to do it by provider that conventional method of passing like this can always be used
+                    "forcastMin_val": instance.forcastMin,
+                    "forcastType_val": instance.forcastType,
+                    "forcastIcon_val": instance.forcastIcon,
+                    "pm2_val": instance.Pm2,
+                    "pm10_val": instance.Pm10,
+                    "o3_val": instance.o3,
+                    "so2_val": instance.so2,
+                    "no2_val": instance.no2,
                   })
             });
   }

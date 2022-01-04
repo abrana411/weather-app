@@ -1,9 +1,13 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:weather_app/helper/data_fetcher.dart';
 import './loading_screen.dart';
 
 import '../forcast.dart';
@@ -26,7 +30,17 @@ class _HomeScreenState extends State<HomeScreen> {
   var showForcast = false;
   var temp = "";
   var windSpeed = "";
+  var loading = false;
+  String pmcheck = "";
+  String pm10check = "";
+  String no2check = "";
+  String o3check = "";
+  var c1;
+  var c2;
+  var c3;
+  var c4;
   TextEditingController searchTextController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     var exampleCities = ["delhi", "mumbai", "chennai", "london", "new york"];
@@ -52,6 +66,63 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       windSpeed = weatherInfo["windSpeed_val"];
     }
+    //for pm2.5
+    if (double.parse(weatherInfo["pm2_val"]) <= 55) {
+      pmcheck = "Good";
+      c1 = Colors.green;
+    } else if (double.parse(weatherInfo["pm2_val"]) > 55 &&
+        double.parse(weatherInfo["pm2_val"]) < 200) {
+      pmcheck = "Moderate";
+      c1 = Colors.yellow;
+    } else {
+      pmcheck = "very-poor";
+      c1 = Colors.red;
+    }
+    //for pm10
+    if (double.parse(weatherInfo["pm10_val"]) <= 55) {
+      pm10check = "Good";
+      c2 = Colors.green;
+    } else if (double.parse(weatherInfo["pm10_val"]) > 55 &&
+        double.parse(weatherInfo["pm10_val"]) < 200) {
+      pm10check = "Moderate";
+      c2 = Colors.yellow;
+    } else {
+      pm10check = "very-poor";
+      c2 = Colors.red;
+    }
+    //for no2
+    if (double.parse(weatherInfo["no2_val"]) <= 100) {
+      no2check = "Good";
+      c3 = Colors.green;
+    } else if (double.parse(weatherInfo["no2_val"]) > 100 &&
+        double.parse(weatherInfo["no2_val"]) < 200) {
+      no2check = "Moderate";
+      c3 = Colors.yellow;
+    } else {
+      no2check = "very-poor";
+      c3 = Colors.red;
+    }
+    //for o3
+    if (double.parse(weatherInfo["o3_val"]) <= 100) {
+      o3check = "Good";
+      c4 = Colors.green;
+    } else if (double.parse(weatherInfo["o3_val"]) > 100 &&
+        double.parse(weatherInfo["o3_val"]) < 180) {
+      o3check = "Moderate";
+      c4 = Colors.yellow;
+    } else {
+      o3check = "very-poor";
+      c4 = Colors.red;
+    }
+
+    //since not using provider so below method is not used
+    // void ForcastGet() async {
+    //   loading = true;
+    //   await Provider.of<Data>(context, listen: false).getForcast();
+    //   setState(() {
+    //     loading = false;
+    //   });
+    //}
 
     return Scaffold(
       resizeToAvoidBottomInset:
@@ -154,6 +225,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                     fontSize: 16, fontWeight: FontWeight.w500),
                               )
                             ],
+                          ),
+                          const SizedBox(
+                            width: 18,
+                          ),
+                          GestureDetector(
+                            child: const Icon(
+                              Icons.refresh,
+                              size: 30,
+                            ),
+                            onTap: () {
+                              Navigator.pushReplacementNamed(
+                                  context, Loading.routeName, arguments: {
+                                "SearchedText": weatherInfo["cityName_val"]
+                              });
+                            },
                           )
                         ],
                       ),
@@ -286,35 +372,187 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              Container(
-                margin: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.black26),
-                width: 120,
-                height: 40,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                        onPressed: () {
-                          setState(() {
-                            showForcast = !showForcast;
-                          });
-                        },
-                        child: Text(
-                          !showForcast ? "More" : "less",
-                          style: const TextStyle(color: Colors.white),
-                        )),
-                    !showForcast
-                        ? const Icon(Icons.expand_more_outlined)
-                        : const Icon(Icons.expand_less_outlined)
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.black26),
+                    width: 120,
+                    height: 40,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                            onPressed: () {
+                              setState(() {
+                                showForcast = !showForcast;
+                              });
+                              //ForcastGet();
+                            },
+                            child: const Text(
+                              // !showForcast ? "More" : "less",
+                              "Forcast",
+                              style: TextStyle(color: Colors.white),
+                            )),
+                        !showForcast
+                            ? const Icon(Icons.expand_more_outlined)
+                            : const Icon(Icons.expand_less_outlined),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(left: 50),
+                    alignment: Alignment.bottomRight,
+                    child: FloatingActionButton(
+                      onPressed: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Container(
+                                height: 300,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      height: 250,
+                                      child: ListView(
+                                        children: [
+                                          Card(
+                                            child: ListTile(
+                                              leading:
+                                                  const Icon(Icons.forward),
+                                              title:
+                                                  const Text("PM 2.5 Level:"),
+                                              subtitle:
+                                                  Text(weatherInfo["pm2_val"]),
+                                              trailing: Text(
+                                                pmcheck,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: c1),
+                                              ),
+                                            ),
+                                          ),
+                                          Card(
+                                            child: ListTile(
+                                                leading:
+                                                    const Icon(Icons.forward),
+                                                title:
+                                                    const Text("PM 10 Level:"),
+                                                subtitle: Text(
+                                                    weatherInfo["pm10_val"]),
+                                                trailing: Text(
+                                                  pm10check,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: c2,
+                                                  ),
+                                                )),
+                                          ),
+                                          Card(
+                                            child: ListTile(
+                                              leading:
+                                                  const Icon(Icons.forward),
+                                              title:
+                                                  const Text("PM NO2 Level:"),
+                                              subtitle:
+                                                  Text(weatherInfo["no2_val"]),
+                                              trailing: Text(
+                                                no2check,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: c3),
+                                              ),
+                                            ),
+                                          ),
+                                          Card(
+                                            child: ListTile(
+                                              leading:
+                                                  const Icon(Icons.forward),
+                                              title: const Text("PM O3 Level:"),
+                                              subtitle:
+                                                  Text(weatherInfo["o3_val"]),
+                                              trailing: Text(
+                                                o3check,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: c4),
+                                              ),
+                                            ),
+                                          ),
+                                          Card(
+                                              child: ListTile(
+                                            leading: const Icon(Icons.forward),
+                                            title: const Text("PM SO2 Level:"),
+                                            subtitle:
+                                                Text(weatherInfo["so2_val"]),
+                                            trailing: double.parse(weatherInfo[
+                                                        "so2_val"]) <
+                                                    100
+                                                ? const Text(
+                                                    "Good",
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.green),
+                                                  )
+                                                : const Text(
+                                                    "Poor",
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                          )),
+                                        ],
+                                      ),
+                                    ),
+                                    OutlinedButton.icon(
+                                        onPressed: () => Navigator.pop(context),
+                                        icon: const Icon(
+                                          Icons.close,
+                                          size: 17,
+                                        ),
+                                        label: const Text("Close"))
+                                  ],
+                                ),
+                              );
+                            });
+                      },
+                      child: const Text("AQI"),
+                    ),
+                  ),
+                ],
               ),
-              if (showForcast) const forcastView(),
+              if (showForcast &&
+                  (weatherInfo["temperature_val"].toString() != "NA"))
+                forcastView(
+                  forcastMax: weatherInfo["forcastMax_val"],
+                  forcastMin: weatherInfo["forcastMin_val"],
+                  forcastType: weatherInfo["forcastType_val"],
+                  forcastIcon: weatherInfo["forcastIcon_val"],
+                ),
+              if (showForcast &&
+                  (weatherInfo["temperature_val"].toString() == "NA"))
+                const Center(
+                    child: Text(
+                  "Enter a valid place to get forcast!!",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )),
+              //if (showForcast && !loading) const forcastView(),
+              // if (showForcast && loading)
+              //   const Center(
+              //     child: CircularProgressIndicator(),
+              //   ),
+
               Container(
-                margin: const EdgeInsets.all(20),
+                margin: const EdgeInsets.all(13),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
