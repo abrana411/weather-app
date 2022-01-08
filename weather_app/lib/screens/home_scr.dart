@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/helper/data_fetcher.dart';
 import './loading_screen.dart';
 
 import '../forcast.dart';
+import '../screens/fav_cities.dart';
 
 // import 'dart:convert';
 // import 'package:http/http.dart';
@@ -27,18 +29,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  //var _isforcastShow = false;
+  var isFav = false;
   var showForcast = false;
   var temp = "";
+  // ignore: non_constant_identifier_names
+  var feels_like = "";
   var windSpeed = "";
   var loading = false;
   String pmcheck = "";
   String pm10check = "";
   String no2check = "";
   String o3check = "";
-  var c1;
-  var c2;
-  var c3;
-  var c4;
+  var c1 = Colors.black;
+  var c2 = Colors.black;
+  var c3 = Colors.black;
+  var c4 = Colors.black;
+  String moonRise = "NIL";
+  String sunRise = "NIL";
+  String moonSet = "NIL";
+  String sunSet = "NIL";
+  // String isAmMoonRise = "AM";
+  // String isAmMoonSet = "AM";
   TextEditingController searchTextController = TextEditingController();
 
   @override
@@ -56,8 +68,12 @@ class _HomeScreenState extends State<HomeScreen> {
       temp = double.parse(weatherInfo["temperature_val"])
           .toStringAsFixed(1)
           .toString();
+      feels_like = double.parse(weatherInfo["feelsLike_val"])
+          .toStringAsFixed(1)
+          .toString();
     } else {
       temp = weatherInfo["temperature_val"];
+      feels_like = "NA";
     }
     if (weatherInfo["windSpeed_val"].toString() != "NA") {
       windSpeed = double.parse(weatherInfo["windSpeed_val"])
@@ -66,54 +82,105 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       windSpeed = weatherInfo["windSpeed_val"];
     }
-    //for pm2.5
-    if (double.parse(weatherInfo["pm2_val"]) <= 55) {
-      pmcheck = "Good";
-      c1 = Colors.green;
-    } else if (double.parse(weatherInfo["pm2_val"]) > 55 &&
-        double.parse(weatherInfo["pm2_val"]) < 200) {
-      pmcheck = "Moderate";
-      c1 = Colors.yellow;
-    } else {
-      pmcheck = "very-poor";
-      c1 = Colors.red;
+    if (weatherInfo["temperature_val"].toString() != "NA") {
+      //for pm2.5
+      if (double.parse(weatherInfo["pm2_val"]) <= 55) {
+        pmcheck = "Good";
+        c1 = Colors.green;
+      } else if (double.parse(weatherInfo["pm2_val"]) > 55 &&
+          double.parse(weatherInfo["pm2_val"]) < 200) {
+        pmcheck = "Moderate";
+        c1 = Colors.yellow;
+      } else {
+        pmcheck = "very-poor";
+        c1 = Colors.red;
+      }
+      //for pm10
+      if (double.parse(weatherInfo["pm10_val"]) <= 55) {
+        pm10check = "Good";
+        c2 = Colors.green;
+      } else if (double.parse(weatherInfo["pm10_val"]) > 55 &&
+          double.parse(weatherInfo["pm10_val"]) < 200) {
+        pm10check = "Moderate";
+        c2 = Colors.yellow;
+      } else {
+        pm10check = "very-poor";
+        c2 = Colors.red;
+      }
+      //for no2
+      if (double.parse(weatherInfo["no2_val"]) <= 100) {
+        no2check = "Good";
+        c3 = Colors.green;
+      } else if (double.parse(weatherInfo["no2_val"]) > 100 &&
+          double.parse(weatherInfo["no2_val"]) < 200) {
+        no2check = "Moderate";
+        c3 = Colors.yellow;
+      } else {
+        no2check = "very-poor";
+        c3 = Colors.red;
+      }
+      //for o3
+      if (double.parse(weatherInfo["o3_val"]) <= 100) {
+        o3check = "Good";
+        c4 = Colors.green;
+      } else if (double.parse(weatherInfo["o3_val"]) > 100 &&
+          double.parse(weatherInfo["o3_val"]) < 180) {
+        o3check = "Moderate";
+        c4 = Colors.yellow;
+      } else {
+        o3check = "very-poor";
+        c4 = Colors.red;
+      }
     }
-    //for pm10
-    if (double.parse(weatherInfo["pm10_val"]) <= 55) {
-      pm10check = "Good";
-      c2 = Colors.green;
-    } else if (double.parse(weatherInfo["pm10_val"]) > 55 &&
-        double.parse(weatherInfo["pm10_val"]) < 200) {
-      pm10check = "Moderate";
-      c2 = Colors.yellow;
-    } else {
-      pm10check = "very-poor";
-      c2 = Colors.red;
+
+    if (Provider.of<Data>(context, listen: false)
+        .doesContain(weatherInfo["cityName_val"])) {
+      isFav = true;
     }
-    //for no2
-    if (double.parse(weatherInfo["no2_val"]) <= 100) {
-      no2check = "Good";
-      c3 = Colors.green;
-    } else if (double.parse(weatherInfo["no2_val"]) > 100 &&
-        double.parse(weatherInfo["no2_val"]) < 200) {
-      no2check = "Moderate";
-      c3 = Colors.yellow;
-    } else {
-      no2check = "very-poor";
-      c3 = Colors.red;
+
+    String capitalize(String s) {
+      return (s[0].toUpperCase() +
+          s
+              .substring(1)
+              .toLowerCase()); //will return string s where only first letter will be capital
     }
-    //for o3
-    if (double.parse(weatherInfo["o3_val"]) <= 100) {
-      o3check = "Good";
-      c4 = Colors.green;
-    } else if (double.parse(weatherInfo["o3_val"]) > 100 &&
-        double.parse(weatherInfo["o3_val"]) < 180) {
-      o3check = "Moderate";
-      c4 = Colors.yellow;
-    } else {
-      o3check = "very-poor";
-      c4 = Colors.red;
+
+    //when we submit the textfield or click on the search icon then this below method will be triggered
+    void onSearched() {
+      if (searchTextController.text == "") {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Write some valid place name in search bar!")));
+      } else {
+        Navigator.pushReplacementNamed(context, Loading.routeName,
+            arguments: {"Text": capitalize(searchTextController.text.trim())});
+      }
     }
+
+    if (weatherInfo["temperature_val"].toString() != "NA") {
+      //only if valid place is there
+      //assigning the sunrise,moonrise,sunset and moonset dates by converting the epoch(time in sec given from start to now) and using date formatter
+      moonRise = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(
+          int.parse(weatherInfo["moonrise_val"]) * 1000));
+      sunRise = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(
+          int.parse(weatherInfo["sunrise_val"]) * 1000));
+      moonSet = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(
+          int.parse(weatherInfo["moonset_val"]) * 1000));
+      sunSet = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(
+          int.parse(weatherInfo["sunset_val"]) * 1000));
+    }
+
+    // if (DateTime.fromMillisecondsSinceEpoch( //no need since using international clock
+    //             int.parse(weatherInfo["moonrise_val"]) * 1000)
+    //         .hour >
+    //     12) {
+    //   isAmMoonRise = "PM";
+    // }
+    // if (DateTime.fromMillisecondsSinceEpoch(
+    //             int.parse(weatherInfo["moonset_val"]) * 1000)
+    //         .hour >
+    //     12) {
+    //   isAmMoonSet = "PM";
+    // }
 
     //since not using provider so below method is not used
     // void ForcastGet() async {
@@ -124,6 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
     //   });
     //}
 
+    // Future.delayed(Duration(seconds: 3), () {
+    //   _isforcastShow = true;
+    // });
     return Scaffold(
       resizeToAvoidBottomInset:
           false, //isse jab tex field me click kare h to j keyboard h vo screen ke uper he aa jata h to padding nhi lete hm keyboard se to sizing problem nhi hoti
@@ -159,16 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        if (searchTextController.text == "") {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                              content: Text(
-                                  "Write some valid place name in search bar!")));
-                        } else {
-                          Navigator.pushReplacementNamed(
-                              context, Loading.routeName, arguments: {
-                            "SearchedText": searchTextController.text.trim()
-                          });
-                        }
+                        onSearched();
                       },
                       child: const Icon(Icons.search),
                     ),
@@ -178,6 +239,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                         //textfield should be kept in expanded if used inside a row
                         child: TextField(
+                      onSubmitted: (str) {
+                        onSearched();
+                      },
                       controller:
                           searchTextController, //assigning controller and the text in extfield will be stored in this controller now
                       decoration: InputDecoration(
@@ -186,6 +250,45 @@ class _HomeScreenState extends State<HomeScreen> {
                               "search a place eg, $excity", //this is a placeholder which fades away when we starts typing
                           border: InputBorder.none),
                     )),
+                    PopupMenuButton(
+                      shape: const OutlineInputBorder(
+                          borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 3,
+                      )),
+                      offset: const Offset(30, 40),
+                      child: const SizedBox(
+                          width: 20, child: Icon(Icons.settings)),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.favorite,
+                                color: Colors.red,
+                                size: 15,
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                "My Favourite cities",
+                                style: TextStyle(fontSize: 15),
+                              )
+                            ],
+                          ),
+                          value: 1,
+                        ),
+                      ],
+                      onSelected: (val) {
+                        if (val == 1) {
+                          Navigator.pushReplacementNamed(
+                              context, Favcities.routeName, arguments: {
+                            "currentcity": weatherInfo["cityName_val"]
+                          });
+                        }
+                      },
+                    )
                   ],
                 ),
               ),
@@ -209,9 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               "http://openweathermap.org/img/wn/${weatherInfo["iconWeather_val"]}@2x.png",
                               width: 80,
                               height: 80),
-                          const SizedBox(
-                            width: 80,
-                          ),
+                          const Spacer(),
                           Column(
                             children: [
                               Text(weatherInfo["typeOfweather_val"],
@@ -237,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             onTap: () {
                               Navigator.pushReplacementNamed(
                                   context, Loading.routeName, arguments: {
-                                "SearchedText": weatherInfo["cityName_val"]
+                                "Text": weatherInfo["cityName_val"]
                               });
                             },
                           )
@@ -284,17 +385,167 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: const TextStyle(fontSize: 70),
                               ),
                               const Text(
-                                "c",
+                                "°c",
                                 style: TextStyle(fontSize: 35),
                               )
                             ],
-                          )
+                          ),
+                          Text(feels_like),
+                          Row(
+                            children: [
+                              Container(
+                                margin:
+                                    const EdgeInsets.only(left: 15, top: 23),
+                                child: PopupMenuButton(
+                                  shape: const OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                    color: Colors.black,
+                                    width: 3,
+                                  )),
+                                  offset: const Offset(30, 40),
+                                  child: const SizedBox(
+                                      width: 20,
+                                      child: Icon(
+                                        Icons.wb_sunny_rounded,
+                                        color: Colors.orange,
+                                        size: 27,
+                                      )),
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      child: Column(
+                                        children: [
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                WeatherIcons.sunrise,
+                                                color: Colors.red[300],
+                                              ),
+                                              const SizedBox(
+                                                width: 10,
+                                              ),
+                                              Text(
+                                                // sunRise + " AM",
+                                                sunRise,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              )
+                                            ],
+                                          ),
+                                          // const SizedBox(
+                                          //   height: 20,
+                                          // ),
+                                          const Divider(),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                WeatherIcons.sunset,
+                                                color: Colors.red[300],
+                                              ),
+                                              const SizedBox(
+                                                width: 10,
+                                              ),
+                                              Text(
+                                                // sunSet + " PM",
+                                                sunSet,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(
+                                            height: 5,
+                                          )
+                                        ],
+                                      ),
+                                      value: 1,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                margin:
+                                    const EdgeInsets.only(right: 15, top: 23),
+                                child: PopupMenuButton(
+                                  shape: const OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                    color: Colors.black,
+                                    width: 3,
+                                  )),
+                                  offset: const Offset(-30, 40),
+                                  child: const SizedBox(
+                                      width: 20,
+                                      child: Icon(
+                                        WeatherIcons.moon_alt_third_quarter,
+                                        size: 27,
+                                      )),
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      child: Column(
+                                        children: [
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+                                          Row(
+                                            children: [
+                                              const Icon(WeatherIcons.moonrise,
+                                                  color: Colors.blueGrey),
+                                              const SizedBox(
+                                                width: 8,
+                                              ),
+                                              Text(
+                                                // moonRise + " " + isAmMoonRise,
+                                                moonRise,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          // const SizedBox(
+                                          //   height: 20,
+                                          // ),
+                                          const Divider(),
+                                          Row(
+                                            children: [
+                                              const Icon(WeatherIcons.moonset,
+                                                  color: Colors.blueGrey),
+                                              const SizedBox(
+                                                width: 10,
+                                              ),
+                                              Text(
+                                                // moonSet + " " + isAmMoonSet, //dont need am or pm since using international clock
+                                                moonSet,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              )
+                                            ],
+                                          ),
+                                          const SizedBox(
+                                            height: 5,
+                                          )
+                                        ],
+                                      ),
+                                      value: 1,
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ],
               ),
+
               //4th and 5th containers
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -387,9 +638,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         TextButton(
                             onPressed: () {
-                              setState(() {
-                                showForcast = !showForcast;
-                              });
+                              if (weatherInfo["temperature_val"].toString() ==
+                                  "NA") {
+                                null;
+                              } else {
+                                setState(() {
+                                  showForcast = !showForcast;
+                                });
+                              }
                               //ForcastGet();
                             },
                             child: const Text(
@@ -404,125 +660,191 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Container(
-                    margin: const EdgeInsets.only(left: 50),
+                    margin: const EdgeInsets.only(left: 30),
                     alignment: Alignment.bottomRight,
                     child: FloatingActionButton(
+                      heroTag: "bt1",
                       onPressed: () {
                         showModalBottomSheet(
                             context: context,
                             builder: (BuildContext context) {
-                              return Container(
-                                height: 300,
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      height: 250,
-                                      child: ListView(
+                              return weatherInfo["temperature_val"]
+                                          .toString() !=
+                                      "NA"
+                                  ? SizedBox(
+                                      height: 300,
+                                      child: Column(
                                         children: [
-                                          Card(
-                                            child: ListTile(
-                                              leading:
-                                                  const Icon(Icons.forward),
-                                              title:
-                                                  const Text("PM 2.5 Level:"),
-                                              subtitle:
-                                                  Text(weatherInfo["pm2_val"]),
-                                              trailing: Text(
-                                                pmcheck,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: c1),
-                                              ),
-                                            ),
-                                          ),
-                                          Card(
-                                            child: ListTile(
-                                                leading:
-                                                    const Icon(Icons.forward),
-                                                title:
-                                                    const Text("PM 10 Level:"),
-                                                subtitle: Text(
-                                                    weatherInfo["pm10_val"]),
-                                                trailing: Text(
-                                                  pm10check,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: c2,
-                                                  ),
-                                                )),
-                                          ),
-                                          Card(
-                                            child: ListTile(
-                                              leading:
-                                                  const Icon(Icons.forward),
-                                              title:
-                                                  const Text("PM NO2 Level:"),
-                                              subtitle:
-                                                  Text(weatherInfo["no2_val"]),
-                                              trailing: Text(
-                                                no2check,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: c3),
-                                              ),
-                                            ),
-                                          ),
-                                          Card(
-                                            child: ListTile(
-                                              leading:
-                                                  const Icon(Icons.forward),
-                                              title: const Text("PM O3 Level:"),
-                                              subtitle:
-                                                  Text(weatherInfo["o3_val"]),
-                                              trailing: Text(
-                                                o3check,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: c4),
-                                              ),
-                                            ),
-                                          ),
-                                          Card(
-                                              child: ListTile(
-                                            leading: const Icon(Icons.forward),
-                                            title: const Text("PM SO2 Level:"),
-                                            subtitle:
-                                                Text(weatherInfo["so2_val"]),
-                                            trailing: double.parse(weatherInfo[
-                                                        "so2_val"]) <
-                                                    100
-                                                ? const Text(
-                                                    "Good",
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.green),
-                                                  )
-                                                : const Text(
-                                                    "Poor",
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.red,
+                                          SizedBox(
+                                            height: 250,
+                                            child: ListView(
+                                              children: [
+                                                Card(
+                                                  child: ListTile(
+                                                    leading: const Icon(
+                                                        Icons.forward),
+                                                    title: const Text(
+                                                        "PM 2.5 Level:"),
+                                                    subtitle: Text(
+                                                        weatherInfo["pm2_val"] +
+                                                            "μg/m3"),
+                                                    trailing: Text(
+                                                      pmcheck,
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: c1),
                                                     ),
                                                   ),
-                                          )),
+                                                ),
+                                                Card(
+                                                  child: ListTile(
+                                                      leading: const Icon(
+                                                          Icons.forward),
+                                                      title: const Text(
+                                                          "PM 10 Level:"),
+                                                      subtitle: Text(
+                                                          weatherInfo[
+                                                                  "pm10_val"] +
+                                                              "μg/m3"),
+                                                      trailing: Text(
+                                                        pm10check,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: c2,
+                                                        ),
+                                                      )),
+                                                ),
+                                                Card(
+                                                  child: ListTile(
+                                                    leading: const Icon(
+                                                        Icons.forward),
+                                                    title: const Text(
+                                                        "NO2 Level:"),
+                                                    subtitle: Text(
+                                                        weatherInfo["no2_val"] +
+                                                            "μg/m3"),
+                                                    trailing: Text(
+                                                      no2check,
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: c3),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Card(
+                                                  child: ListTile(
+                                                    leading: const Icon(
+                                                        Icons.forward),
+                                                    title:
+                                                        const Text("O3 Level:"),
+                                                    subtitle: Text(
+                                                        weatherInfo["o3_val"] +
+                                                            "μg/m3"),
+                                                    trailing: Text(
+                                                      o3check,
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: c4),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Card(
+                                                    child: ListTile(
+                                                  leading:
+                                                      const Icon(Icons.forward),
+                                                  title:
+                                                      const Text("SO2 Level:"),
+                                                  subtitle: Text(
+                                                      weatherInfo["so2_val"] +
+                                                          "μg/m3"),
+                                                  trailing: double.parse(
+                                                              weatherInfo[
+                                                                  "so2_val"]) <
+                                                          100
+                                                      ? const Text(
+                                                          "Good",
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.green),
+                                                        )
+                                                      : const Text(
+                                                          "Poor",
+                                                          style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.red,
+                                                          ),
+                                                        ),
+                                                )),
+                                              ],
+                                            ),
+                                          ),
+                                          OutlinedButton.icon(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              icon: const Icon(
+                                                Icons.close,
+                                                size: 17,
+                                              ),
+                                              label: const Text("Close"))
                                         ],
                                       ),
-                                    ),
-                                    OutlinedButton.icon(
-                                        onPressed: () => Navigator.pop(context),
-                                        icon: const Icon(
-                                          Icons.close,
-                                          size: 17,
-                                        ),
-                                        label: const Text("Close"))
-                                  ],
-                                ),
-                              );
+                                    )
+                                  : const Center(
+                                      child: Text(
+                                          "Sorry Could not fetch the data!!"),
+                                    );
                             });
                       },
                       child: const Text("AQI"),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(left: 40),
+                    child: FloatingActionButton(
+                      heroTag:
+                          "bt2", //if we use multiple floating action button then we have to use this tag to differentite both
+                      onPressed: () {
+                        if (weatherInfo["temperature_val"].toString() != "NA") {
+                          if (!isFav) {
+                            Provider.of<Data>(context, listen: false).addFavCity(
+                                weatherInfo["cityName_val"],
+                                weatherInfo[
+                                    "temperature_val"]); //storing the temp along with city too now so using a map
+
+                            ScaffoldMessenger.of(context)
+                                .removeCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Added To Favourites!!")));
+                          } else {
+                            Provider.of<Data>(context, listen: false)
+                                .removeFavCity(weatherInfo["cityName_val"]);
+                            ScaffoldMessenger.of(context)
+                                .removeCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Removed From Favourites!!")));
+                          }
+                          setState(() {
+                            isFav = !isFav;
+                          });
+                        } else //cant set thisto favurie if this place is not in api
+                        {
+                          null;
+                        }
+                      },
+                      child: !isFav
+                          ? const Icon(Icons.star_border_outlined)
+                          : const Icon(Icons.star_outlined),
                     ),
                   ),
                 ],

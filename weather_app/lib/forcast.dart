@@ -2,17 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import './helper/data_fetcher.dart';
 
+// ignore: camel_case_types
 class forcastView extends StatefulWidget {
   static const routeName = "/forcast";
-  var forcastMin = [];
-  var forcastMax = [];
-  var forcastType = [];
-  var forcastIcon = [];
+  final List forcastMin;
+  final List forcastMax;
+  final List forcastType;
+  final List forcastIcon;
 
-  forcastView(
+  const forcastView(
       {Key? key,
       required this.forcastMin,
       required this.forcastMax,
@@ -24,6 +23,7 @@ class forcastView extends StatefulWidget {
   _forcastViewState createState() => _forcastViewState();
 }
 
+// ignore: camel_case_types
 class _forcastViewState extends State<forcastView> {
   @override
   Widget build(BuildContext context) {
@@ -35,6 +35,7 @@ class _forcastViewState extends State<forcastView> {
     // double.parse(weatherInfo["temperature_val"])
     //       .toStringAsFixed(1)
     //       .toString()
+    // ignore: sized_box_for_whitespace
     return Container(
       height: 350,
       width: 370,
