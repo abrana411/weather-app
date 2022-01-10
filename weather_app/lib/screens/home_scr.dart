@@ -369,28 +369,35 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Icon(
                             WeatherIcons.thermometer,
                             color: Colors.blueAccent,
-                            size: 40,
+                            size: 30,
                           ),
                           const SizedBox(
                             height: 20,
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Column(
                             children: [
-                              const SizedBox(
-                                width: 100,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(
+                                    width: 100,
+                                  ),
+                                  Text(
+                                    temp,
+                                    style: const TextStyle(fontSize: 60),
+                                  ),
+                                  const Text(
+                                    "°c",
+                                    style: TextStyle(fontSize: 35),
+                                  )
+                                ],
                               ),
-                              Text(
-                                temp,
-                                style: const TextStyle(fontSize: 70),
-                              ),
-                              const Text(
-                                "°c",
-                                style: TextStyle(fontSize: 35),
-                              )
+                              Container(
+                                  margin: const EdgeInsets.only(left: 80),
+                                  child: Text(
+                                      "Feels Like : " + feels_like + "°c")),
                             ],
                           ),
-                          Text(feels_like),
                           Row(
                             children: [
                               Container(
@@ -626,37 +633,39 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    margin: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Colors.black26),
-                    width: 120,
-                    height: 40,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton(
-                            onPressed: () {
-                              if (weatherInfo["temperature_val"].toString() ==
-                                  "NA") {
-                                null;
-                              } else {
-                                setState(() {
-                                  showForcast = !showForcast;
-                                });
-                              }
-                              //ForcastGet();
-                            },
-                            child: const Text(
-                              // !showForcast ? "More" : "less",
-                              "Forcast",
-                              style: TextStyle(color: Colors.white),
-                            )),
-                        !showForcast
-                            ? const Icon(Icons.expand_more_outlined)
-                            : const Icon(Icons.expand_less_outlined),
-                      ],
+                  GestureDetector(
+                    onTap: () {
+                      if (weatherInfo["temperature_val"].toString() == "NA") {
+                        null;
+                      } else {
+                        setState(() {
+                          showForcast = !showForcast;
+                        });
+                      }
+                      //ForcastGet();
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.black26),
+                      width: 120,
+                      height: 40,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const TextButton(
+                              onPressed: null,
+                              child: Text(
+                                // !showForcast ? "More" : "less",
+                                "Forecast",
+                                style: TextStyle(color: Colors.white),
+                              )),
+                          !showForcast
+                              ? const Icon(Icons.expand_more_outlined)
+                              : const Icon(Icons.expand_less_outlined),
+                        ],
+                      ),
                     ),
                   ),
                   Container(
