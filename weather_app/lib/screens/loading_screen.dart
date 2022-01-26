@@ -16,12 +16,15 @@ class Loading extends StatefulWidget {
 class _LoadingState extends State<Loading> {
   var city = "Delhi"; //initially jab app start hogi to delhi he rakhenge
   void fetchData(String cityName) async {
-    await Provider.of<Data>(context, listen: false)
+    await Provider.of<Data>(context,
+            listen:
+                false) //jaise he kuch search krta to loading scree chalti or yaha dobara data fetch hota to isliye...jo ye method h data fetcher me..usme pehle jo tha _Favcities me usse clear karna jaruri h
         .fetchAndSetDataFromDb(); //taki home.dart me harame pass jo favki list ho usme updated ho sab kuch jisse ham isFav check kr rahe h
     Data instance = Data(location: city);
     await instance.getData();
     await instance.getForcast();
     await instance.getAQI();
+    // await instance.getHourlyForcast();
     // Future.delayed(
     //     const Duration(seconds: 1),
     //     () => {
@@ -48,7 +51,10 @@ class _LoadingState extends State<Loading> {
       "moonrise_val": instance.moonrise,
       "moonset_val": instance.moonset,
       "sunrise_val": instance.sunrise,
-      "sunset_val": instance.sunset
+      "sunset_val": instance.sunset,
+      "hourlytime_val": instance.HourlyForcastTime,
+      "hourlytemp_val": instance.HourlyForcastTemp,
+      "hourlylogo_val": instance.HourlyForcastLogo
     });
     //});
   }

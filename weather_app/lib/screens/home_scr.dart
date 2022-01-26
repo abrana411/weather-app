@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/helper/data_fetcher.dart';
 import './loading_screen.dart';
+import 'package:substring_highlight/substring_highlight.dart';
 
 import '../forcast.dart';
 import '../screens/fav_cities.dart';
@@ -55,6 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: non_constant_identifier_names
+    var SuggestData = Provider.of<Data>(context, listen: false).suggestCity;
+    //print(SuggestData);
     var exampleCities = ["delhi", "mumbai", "chennai", "london", "new york"];
     final random = Random(); //creating instance of random class
     var excity = exampleCities[random.nextInt(exampleCities
@@ -63,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
     //since need context here so making this inside the build method
     Map weatherInfo = ModalRoute.of(context)!.settings.arguments
         as Map; //using !. as null safety feature since the value of ModalRoute.of(context) can be null
-
+    //print(weatherInfo["hourlytime_val"]);
     if (weatherInfo["temperature_val"].toString() != "NA") {
       temp = double.parse(weatherInfo["temperature_val"])
           .toStringAsFixed(1)
@@ -148,11 +152,15 @@ class _HomeScreenState extends State<HomeScreen> {
     //when we submit the textfield or click on the search icon then this below method will be triggered
     void onSearched() {
       if (searchTextController.text == "") {
+        // if (str == "") {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text("Write some valid place name in search bar!")));
       } else {
+        Provider.of<Data>(context, listen: false)
+            .AddAndRemoveSuggest(searchTextController.text.trim());
         Navigator.pushReplacementNamed(context, Loading.routeName,
             arguments: {"Text": capitalize(searchTextController.text.trim())});
+        // arguments: {"Text": capitalize(str.trim())});
       }
     }
 
@@ -238,57 +246,153 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Expanded(
                         //textfield should be kept in expanded if used inside a row
-                        child: TextField(
-                      onSubmitted: (str) {
-                        onSearched();
-                      },
-                      controller:
-                          searchTextController, //assigning controller and the text in extfield will be stored in this controller now
-                      decoration: InputDecoration(
-                          // label: Text("Search a place..."),
-                          hintText:
-                              "search a place eg, $excity", //this is a placeholder which fades away when we starts typing
-                          border: InputBorder.none),
-                    )),
-                    PopupMenuButton(
-                      shape: const OutlineInputBorder(
-                          borderSide: BorderSide(
-                        color: Colors.black,
-                        width: 3,
-                      )),
-                      offset: const Offset(30, 40),
-                      child: const SizedBox(
-                          width: 20, child: Icon(Icons.settings)),
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          child: Row(
-                            children: const [
-                              Icon(
-                                Icons.favorite,
-                                color: Colors.red,
-                                size: 15,
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                "My Favourite cities",
-                                style: TextStyle(fontSize: 15),
-                              )
-                            ],
-                          ),
-                          value: 1,
-                        ),
-                      ],
-                      onSelected: (val) {
-                        if (val == 1) {
-                          Navigator.pushReplacementNamed(
-                              context, Favcities.routeName, arguments: {
-                            "currentcity": weatherInfo["cityName_val"]
-                          });
+                        child: Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        //here TexEdiingValue is he query r he thing we are writing in the field
+                        if (textEditingValue.text.isEmpty) {
+                          return []; //returning an empty list if nothing is written in the text field inside autocomplete.so that we can get rid of the suggestions by removing everything from the field...otherwise if i dont add this then i will get the suggestions even after i dont have anything written in the field
+                        } else //agar kuch likha h field me to ...jitna part match hoga kisi list ke item se...us list ke item ko bhej denge
+                        {
+                          return SuggestData.where((place) => place
+                              .toLowerCase()
+                              .contains(textEditingValue
+                                  .text)); //matlab jo ham likh rahe h vo jis place me aate h wrds unhe he shw krenge bs
                         }
                       },
-                    )
+                      // onSelected: (selectedSuggestion) {
+                      //   onSearched(selectedSuggestion
+                      //       as String); //agar hamne suggestion me se kisi pe click kr diya to
+                      // },
+
+                      // optionsMaxHeight:
+                      //     350, //heigh of the sheet which has suggestions
+                      optionsViewBuilder:
+                          (context, Function(String) onSelected, options) {
+                        //here have to specify he type of argumen n seleceted will take
+                        //options is the things in the suggestions..it is iterabke bject not a list particularly
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            //have to wrap lisview seperated in a material here
+                            child: Container(
+                              width: 250,
+                              //height: 200,
+                              decoration: const BoxDecoration(
+                                  color: Colors.black87,
+                                  border: Border(
+                                      left: BorderSide(color: Colors.white),
+                                      right: BorderSide(color: Colors.white),
+                                      bottom: BorderSide(color: Colors.white))),
+                              child: ListView.builder(
+                                  shrinkWrap:
+                                      true, //height will be based on the number of elements of this list tile
+                                  padding: EdgeInsets.zero,
+                                  itemBuilder: (context, index) {
+                                    //har ek option kaise dikhega
+                                    return ListTile(
+                                      onTap: () {
+                                        onSelected(options
+                                            .elementAt(index)
+                                            .toString()); //so that it gets seleced when we click on it..by default if we dont write optionviewbuilder ..then it will have automatic nSelecetd function
+                                      },
+                                      // title: Text(options
+                                      //     .elementAt(index)
+                                      //     .toString()), //this is how we can give each element for iterable options to title
+                                      title: SubstringHighlight(
+                                        text:
+                                            options.elementAt(index).toString(),
+                                        term: searchTextController.text,
+                                        textStyle: const TextStyle(
+                                            color: Colors.white),
+                                        textStyleHighlight: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red),
+                                      ),
+                                      //this is a widget from substring highlight package and here text is the total text which i want to show and the term is the text which i want to highlight
+                                    );
+                                  },
+                                  itemCount: options.length),
+                            ),
+                          ),
+                        );
+                      },
+                      fieldViewBuilder: (context,
+                          TextEditingController fieldTextEditingController,
+                          FocusNode fieldFocusNode,
+                          VoidCallback onFieldSubmitted) {
+                        searchTextController = fieldTextEditingController;
+                        return TextField(
+                            //field view ke aander reurn kar sake h ext field agar ki sling deni h to AuCmplee tex field ko
+                            focusNode: fieldFocusNode,
+                            onSubmitted: (str) {
+                              onSearched();
+                            },
+                            controller: fieldTextEditingController,
+                            // controller:
+                            //     searchTextController, //assigning controller and the text in extfield will be stored in this controller now
+                            decoration: InputDecoration(
+                              // label: Text("Search a place..."),
+                              hintText:
+                                  "search a place eg, $excity", //this is a placeholder which fades away when we starts typing
+                              border: InputBorder.none,
+                              // prefixIcon: Icon(Icons.search)),
+                            ));
+                      },
+                    )),
+                    PopupMenuButton(
+                        shape: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                          color: Colors.black,
+                          width: 3,
+                        )),
+                        offset: const Offset(30, 40),
+                        child: const SizedBox(
+                            width: 20, child: Icon(Icons.settings)),
+                        itemBuilder: (context) => [
+                              PopupMenuItem(
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.favorite,
+                                      color: Colors.red,
+                                      size: 15,
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      "My Favourite cities",
+                                      style: TextStyle(fontSize: 15),
+                                    )
+                                  ],
+                                ),
+                                value: 1,
+                              ),
+                            ],
+                        onSelected: (val) {
+                          if (val == 1) {
+                            // Navigator.pushReplacementNamed(
+                            //     context, Favcities.routeName,
+                            //     arguments: {
+                            //       "currentcity": weatherInfo["cityName_val"],
+                            //       "citiesFav": Provider.of<Data>(
+                            //         context,
+                            //         listen: false,
+                            //       ).Fav.keys.toList()
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Favcities(
+                                          Currentcity:
+                                              weatherInfo["cityName_val"],
+                                          favCities: Provider.of<Data>(
+                                            context,
+                                            listen: false,
+                                            // ).Fav.keys.toList(),
+                                          ).Fav, //only Fav now
+                                        )));
+                          }
+                        })
                   ],
                 ),
               ),
@@ -309,9 +413,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Row(
                         children: [
                           Image.network(
-                              "http://openweathermap.org/img/wn/${weatherInfo["iconWeather_val"]}@2x.png",
-                              width: 80,
-                              height: 80),
+                            "http://openweathermap.org/img/wn/${weatherInfo["iconWeather_val"]}@2x.png",
+                            width: 80,
+                            height: 80,
+                            errorBuilder: (BuildContext context,
+                                Object exception, StackTrace? stackTrace) {
+                              return Image.asset(
+                                  "assets/images/defaultcloud.png",
+                                  width: 80,
+                                  height: 80);
+                            },
+                          ),
                           const Spacer(),
                           Column(
                             children: [
@@ -553,6 +665,90 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
 
+              //6th (will have hourly forcast)
+              Row(
+                children: [
+                  Expanded(
+                      child: Container(
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    height: 100,
+                    width: double.infinity,
+                    child: ListView.builder(
+                      shrinkWrap:
+                          true, //such that the contents of the list wrap will nly take that much space which is needed and dont try to fill the container parent's space if is extra
+                      scrollDirection: Axis
+                          .horizontal, //horizontal direction de di scroll ke liye
+                      itemBuilder: (ctx, index) {
+                        String temp = weatherInfo["temperature_val"] == "NA"
+                            ? "NIL"
+                            : double.parse(weatherInfo["hourlytemp_val"][index])
+                                .toStringAsFixed(1)
+                                .toString();
+                        return GestureDetector(
+                          child: Container(
+                              width: 100,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 15),
+                              margin: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  // border:
+                                  //     Border.all(width: 3, color: Colors.black),
+                                  borderRadius: BorderRadius.circular(15)),
+                              child: Column(children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 3),
+                                  child: Text(
+                                    "$temp °c",
+                                    style: TextStyle(
+                                      color: Colors.blue[900],
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                weatherInfo["temperature_val"] == "NA"
+                                    ? Image.network(
+                                        "http://openweathermap.org/img/wn/o9d@2x.png",
+                                        width: 40,
+                                        height: 40,
+                                        errorBuilder: (BuildContext context,
+                                            Object exception,
+                                            StackTrace? stackTrace) {
+                                          return Image.asset(
+                                              "assets/images/defaultcloud.png",
+                                              width: 40,
+                                              height: 40);
+                                        },
+                                      )
+                                    : Image.network(
+                                        "http://openweathermap.org/img/wn/${weatherInfo["hourlylogo_val"][index]}@2x.png",
+                                        width: 40,
+                                        height: 40,
+                                        errorBuilder: (BuildContext context,
+                                            Object exception,
+                                            StackTrace? stackTrace) {
+                                          return Image.asset(
+                                              "assets/images/defaultcloud.png",
+                                              width: 40,
+                                              height: 40);
+                                        },
+                                      ),
+                                Text(
+                                  weatherInfo["hourlytime_val"][index],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                )
+                              ])),
+                        );
+                      },
+                      // itemCount: weatherInfo["hourlytime_val"].length, //not working have to give the number
+                      itemCount: 24,
+                    ),
+                  ))
+                ],
+              ),
               //4th and 5th containers
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -649,7 +845,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           color: Colors.black26),
-                      width: 120,
+                      width: 150,
                       height: 40,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -658,7 +854,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: null,
                               child: Text(
                                 // !showForcast ? "More" : "less",
-                                "Forecast",
+                                "Daily Forecast",
                                 style: TextStyle(color: Colors.white),
                               )),
                           !showForcast
@@ -823,10 +1019,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         if (weatherInfo["temperature_val"].toString() != "NA") {
                           if (!isFav) {
-                            Provider.of<Data>(context, listen: false).addFavCity(
-                                weatherInfo["cityName_val"],
-                                weatherInfo[
-                                    "temperature_val"]); //storing the temp along with city too now so using a map
+                            Provider.of<Data>(context, listen: false)
+                                .addFavCity(
+                              weatherInfo["cityName_val"],
+                            ); //temp store nhi kara rahe ab
+                            // weatherInfo[
+                            //     "temperature_val"]); //storing the temp along with city too now so using a map
 
                             ScaffoldMessenger.of(context)
                                 .removeCurrentSnackBar();
@@ -834,8 +1032,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SnackBar(
                                     content: Text("Added To Favourites!!")));
                           } else {
-                            Provider.of<Data>(context, listen: false)
-                                .removeFavCity(weatherInfo["cityName_val"]);
+                            Provider.of<Data>(context, listen: false).removeFavCity(
+                                weatherInfo["cityName_val"],
+                                -1); //here we dont need index as..the content of file FavCitiesTemp only gets creted when we click on the fav cities button..so clicking here on start button then we only have to remove the fav city from the data base not from that list s=as it is empy now...but we need  remve from it when we click on rash button inside the fav screen as we then have content in the list and have them reflected there..but here we dont need to do anything with the favcitiesTemp list as it only gets content when the fav cities button gets clicked
                             ScaffoldMessenger.of(context)
                                 .removeCurrentSnackBar();
                             ScaffoldMessenger.of(context).showSnackBar(

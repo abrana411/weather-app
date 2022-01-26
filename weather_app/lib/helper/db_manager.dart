@@ -7,13 +7,22 @@ class DbManage {
     final dbPath = await sql.getDatabasesPath();
     return sql.openDatabase(
       path.join(dbPath,
-          "user_FavCities.db"), //creating user_places.db data base inside the path and first searching for existing one if not there then creating that and adding an empty table
+          "user_Fav.db"), //creating user_places.db data base inside the path and first searching for existing one if not there then creating that and adding an empty table
       onCreate: (db, version) {
-        return db.execute(
-            "CREATE TABLE Places(city TEXT, temp TEXT)"); //will create the table Places here too kyunki usi se insert ki request bhej rahe h to vo he banayenge ya empty bhi agar nhi h to....taki insert jab Places me ho to vo isse match kre jo empty banayenge varna empty kisi or naam se ban jayega or Places naam ka koi table hoga he nhi ...to yaha naam daal deneg Places he
+        return _createDb(db);
+        // db.execute(
+        //     // "CREATE TABLE Places(city TEXT, temp TEXT)"); //will create the table Places here too kyunki usi se insert ki request bhej rahe h to vo he banayenge ya empty bhi agar nhi h to....taki insert jab Places me ho to vo isse match kre jo empty banayenge varna empty kisi or naam se ban jayega or Places naam ka koi table hoga he nhi ...to yaha naam daal deneg Places he
+        //     "CREATE TABLE Places(city TEXT)"); //no need of temp now
       },
       version: 1,
     );
+  }
+
+  static void _createDb(sql.Database db) {
+    //uper n create me ek he return kr sake he db.execute...is liye uper ye vala function return kar diya or isme do table bana di ab
+    db.execute("CREATE TABLE Places(city TEXT)");
+    db.execute(
+        "CREATE TABLE Suggestions(suggestion TEXT)"); //new table for storing suggestions
   }
 
   //below creating a static method so that we can use that withot instantiating the class ...ie can do like DbManage.Insert()
@@ -45,8 +54,13 @@ class DbManage {
         table); //this will return list of map...that we have inserted in this table...so returning this from here so that can use that in place where we are calling it
   }
 
-  static Future<void> removeFromdb(String city, String table) async {
+  static Future<void> removeFromdbCiy(String city, String table) async {
     final db = await DbManage.getDatabase();
     db.delete(table, where: "city=?", whereArgs: [city]);
+  }
+
+  static Future<void> removeFromdbSuggest(String suggest, String table) async {
+    final db = await DbManage.getDatabase();
+    db.delete(table, where: "suggestion=?", whereArgs: [suggest]);
   }
 }

@@ -4,7 +4,7 @@ import 'package:weather_app/helper/data_fetcher.dart';
 import './screens/home_scr.dart';
 import './screens/loading_screen.dart';
 // import './forcast.dart';
-import './screens/fav_cities.dart';
+//import './screens/fav_cities.dart';
 
 void main() {
   runApp(ChangeNotifierProvider(
@@ -22,7 +22,7 @@ void main() {
         //     ),
         HomeScreen.routeName: (ctx) => const HomeScreen(),
         Loading.routeName: (ctx) => const Loading(),
-        Favcities.routeName: (ctx) => const Favcities(),
+        //Favcities.routeName: (ctx) => const Favcities(Currentcity: '', FavCities: [],),
       },
     ),
   ));

@@ -46,8 +46,14 @@ class _forcastViewState extends State<forcastView> {
               title: Text(DateFormat('EEEE')
                   .format(DateTime.now().add(Duration(days: index)))),
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(
-                    "http://openweathermap.org/img/wn/${widget.forcastIcon[index]}@2x.png"),
+                child: Image.network(
+                  "http://openweathermap.org/img/wn/${widget.forcastIcon[index]}@2x.png",
+                  errorBuilder: (BuildContext context, Object exception,
+                      StackTrace? stackTrace) {
+                    return Image.asset("assets/images/defaultcloud.png",
+                        width: 80, height: 80);
+                  },
+                ),
               ),
               subtitle: Text(
                   "Max/Min :  ${double.parse(widget.forcastMax[index]).toStringAsFixed(1).toString()}/${double.parse(widget.forcastMin[index]).toStringAsFixed(1).toString()}"),
