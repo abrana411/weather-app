@@ -12,10 +12,14 @@ class Data extends ChangeNotifier {
   String feelslike = "";
   String humidity = "";
   String windSpeed = "";
+  String windDirection = "";
   String typeOfweather = "";
   String iconWeather = "";
   String longitude = "";
   String latitude = "";
+  String cityName = "";
+  // ignore: non_constant_identifier_names
+  String Countrycode = "";
   var forcastMin = [];
   var forcastMax = [];
   var forcastType = [];
@@ -37,22 +41,74 @@ class Data extends ChangeNotifier {
   var HourlyForcastLogo = [];
   Data({required this.location});
 
-  Future<void> getData() async {
+  void setWindDirection(int windDeg) {
+    //Assigning wind its direction:-
+    if (windDeg > 348.75 || windDeg < 11.25) {
+      windDirection = "N";
+    } else if (windDeg > 11.25 && windDeg < 33.75) {
+      windDirection = "NNE";
+    } else if (windDeg > 33.75 && windDeg < 56.25) {
+      windDirection = "NE";
+    } else if (windDeg > 56.25 && windDeg < 78.75) {
+      windDirection = "ENE";
+    } else if (windDeg > 78.75 && windDeg < 101.25) {
+      windDirection = "E";
+    } else if (windDeg > 101.25 && windDeg < 123.75) {
+      windDirection = "ESE";
+    } else if (windDeg > 123.75 && windDeg < 146.25) {
+      windDirection = "SE";
+    } else if (windDeg > 146.25 && windDeg < 168.75) {
+      windDirection = "SSE";
+    } else if (windDeg > 168.75 && windDeg < 191.25) {
+      windDirection = "S";
+    } else if (windDeg > 191.25 && windDeg < 213.75) {
+      windDirection = "SSW";
+    } else if (windDeg > 213.75 && windDeg < 236.25) {
+      windDirection = "SW";
+    } else if (windDeg > 236.25 && windDeg < 258.75) {
+      windDirection = "WSW";
+    } else if (windDeg > 258.75 && windDeg < 281.25) {
+      windDirection = "W";
+    } else if (windDeg > 281.25 && windDeg < 303.75) {
+      windDirection = "WNW";
+    } else if (windDeg > 303.75 && windDeg < 326.25) {
+      windDirection = "NW";
+    } else if (windDeg > 326.25 && windDeg < 348.75) {
+      windDirection = "NNW";
+    }
+  }
+
+  Future<void> getData(double long, double lati) async {
+    // print(long);
+    // print(lati);
     try {
-      final res = await get(Uri.parse(
-          "https://api.openweathermap.org/data/2.5/weather?q=$location&appid=0845098f21354236ac51412680d05df7"));
+      final Response res;
+      if (long != 0.0 && lati != 0.0) //that means i have accessed the location
+      {
+        res = await get(Uri.parse(
+            "https://api.openweathermap.org/data/2.5/weather?lat=$lati&lon=$long&appid=0845098f21354236ac51412680d05df7"));
+      } else {
+        res = await get(Uri.parse(
+            "https://api.openweathermap.org/data/2.5/weather?q=$location&appid=0845098f21354236ac51412680d05df7"));
+      }
       Map data = json.decode(res
           .body); //converting the json data to map so that we can target the keys accordingly
+      // print(data);
       temperature = (data["main"]["temp"] - 273.15)
           .toString(); //-273.15 to convert kelvin to celsius
       feelslike = (data["main"]["feels_like"] - 273.15).toString();
       humidity = data["main"]["humidity"].toString(); //in percentage %
       windSpeed = (data["wind"]["speed"] * 18 / 5)
           .toString(); //in m/s so changed it into km/hr
+      int windDeg = (data["wind"]["deg"]);
+      setWindDirection(windDeg);
       typeOfweather = data["weather"][0]["main"];
       iconWeather = data["weather"][0]["icon"];
       longitude = data["coord"]["lon"].toString();
       latitude = data["coord"]["lat"].toString();
+      cityName = data["name"] ?? "--";
+
+      Countrycode = data["sys"]["country"] ?? "--";
     } catch (err) {
       //print(err);
       temperature = "NA";
@@ -62,6 +118,8 @@ class Data extends ChangeNotifier {
       longitude = "NA";
       latitude = "NA";
       iconWeather = "09d";
+      windDirection = "NA";
+      Countrycode = "NA";
     }
   }
 

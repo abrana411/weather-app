@@ -36,6 +36,7 @@ dependencies:
   provider: ^6.0.2
   sqflite: ^2.0.1
   substring_highlight: ^1.0.33
+  geolocator: ^8.2.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -70,6 +71,18 @@ flutter:
     - assets/images/nothing.png
     - assets/images/defaultcloud.png
     - assets/images/starlogo1.png
+    - assets/images/Thunderstorm.jpg
+    - assets/images/Drizzle.jpg
+    - assets/images/Rain.jpg
+    - assets/images/Snow.jpg
+    - assets/images/Haze.jpg
+    - assets/images/Mist.jpg
+    - assets/images/Dust.jpg
+    - assets/images/Squall.jpg
+    - assets/images/Fog.jpg
+    - assets/images/Tornado.jpg
+    - assets/images/Clear.jpg
+    - assets/images/Clouds.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

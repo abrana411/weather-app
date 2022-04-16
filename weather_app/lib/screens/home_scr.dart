@@ -1,11 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/helper/data_fetcher.dart';
@@ -50,6 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String sunRise = "NIL";
   String moonSet = "NIL";
   String sunSet = "NIL";
+  String imageToShowInBG = "Thunderstorm";
+  IconData windDir = WeatherIcons.wind_deg_0;
   // String isAmMoonRise = "AM";
   // String isAmMoonSet = "AM";
   TextEditingController searchTextController = TextEditingController();
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
     //since need context here so making this inside the build method
     Map weatherInfo = ModalRoute.of(context)!.settings.arguments
         as Map; //using !. as null safety feature since the value of ModalRoute.of(context) can be null
-    //print(weatherInfo["hourlytime_val"]);
+    // print(weatherInfo["hourlytime_val"]);
     if (weatherInfo["temperature_val"].toString() != "NA") {
       temp = double.parse(weatherInfo["temperature_val"])
           .toStringAsFixed(1)
@@ -149,18 +148,42 @@ class _HomeScreenState extends State<HomeScreen> {
               .toLowerCase()); //will return string s where only first letter will be capital
     }
 
+    Future<bool> _checkForstatus(String txt) async {
+      final Response res = await get(Uri.parse(
+          "https://api.openweathermap.org/data/2.5/weather?q=$txt&appid=0845098f21354236ac51412680d05df7"));
+      Map data = json.decode(res.body);
+      if (data["cod"] == "404") {
+        return false;
+      }
+      return true;
+    }
+
     //when we submit the textfield or click on the search icon then this below method will be triggered
-    void onSearched() {
+    void onSearched() async {
       if (searchTextController.text == "") {
         // if (str == "") {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Write some valid place name in search bar!")));
+            content: Text("Write some valid place name in search bar!",
+                style: TextStyle(color: Colors.red))));
       } else {
-        Provider.of<Data>(context, listen: false)
-            .AddAndRemoveSuggest(searchTextController.text.trim());
-        Navigator.pushReplacementNamed(context, Loading.routeName,
-            arguments: {"Text": capitalize(searchTextController.text.trim())});
-        // arguments: {"Text": capitalize(str.trim())});
+        //before doing anything i will check if ...the status is ok or not ie if i get the data or not for this place
+        bool isAlright = await _checkForstatus(searchTextController.text);
+        if (isAlright) {
+          Provider.of<Data>(context, listen: false)
+              .AddAndRemoveSuggest(searchTextController.text.trim());
+          Navigator.pushReplacementNamed(context, Loading.routeName,
+              arguments: {
+                "Text": capitalize(searchTextController.text.trim()),
+                "isfirst": false
+              });
+          // arguments: {"Text": capitalize(str.trim())});
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+            "Could not fetch data for this location!",
+            style: TextStyle(color: Colors.red),
+          )));
+        }
       }
     }
 
@@ -202,6 +225,44 @@ class _HomeScreenState extends State<HomeScreen> {
     // Future.delayed(Duration(seconds: 3), () {
     //   _isforcastShow = true;
     // });
+
+    //Assigning the wind direction Icon:-
+    if (weatherInfo["windDirection_val"] == "N") {
+      windDir = WeatherIcons.wind_deg_0;
+    } else if (weatherInfo["windDirection_val"] == "NNE" ||
+        weatherInfo["windDirection_val"] == "NE" ||
+        weatherInfo["windDirection_val"] == "ENE") {
+      windDir = WeatherIcons.wind_deg_45;
+    } else if (weatherInfo["windDirection_val"] == "E") {
+      windDir = WeatherIcons.wind_deg_90;
+    } else if (weatherInfo["windDirection_val"] == "ESE" ||
+        weatherInfo["windDirection_val"] == "SE" ||
+        weatherInfo["windDirection_val"] == "SSE") {
+      windDir = WeatherIcons.wind_deg_135;
+    } else if (weatherInfo["windDirection_val"] == "S") {
+      windDir = WeatherIcons.wind_deg_180;
+    } else if (weatherInfo["windDirection_val"] == "SSW" ||
+        weatherInfo["windDirection_val"] == "SW" ||
+        weatherInfo["windDirection_val"] == "WSW") {
+      windDir = WeatherIcons.wind_deg_225;
+    } else if (weatherInfo["windDirection_val"] == "W") {
+      windDir = WeatherIcons.wind_deg_270;
+    } else if (weatherInfo["windDirection_val"] == "WNW" ||
+        weatherInfo["windDirection_val"] == "NW" ||
+        weatherInfo["windDirection_val"] == "NNW") {
+      windDir = WeatherIcons.wind_deg_315;
+    }
+
+    //Selecting image to show in background:-
+    if (weatherInfo["typeOfweather_val"] == "Sand" ||
+        weatherInfo["typeOfweather_val"] == "Ash" ||
+        weatherInfo["typeOfweather_val"] == "Dust" ||
+        weatherInfo["typeOfweather_val"] == "Smoke") {
+      imageToShowInBG = "Dust";
+    } else if (weatherInfo["typeOfweather_val"] != "NA") {
+      imageToShowInBG = weatherInfo["typeOfweather_val"];
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset:
           false, //isse jab tex field me click kare h to j keyboard h vo screen ke uper he aa jata h to padding nhi lete hm keyboard se to sizing problem nhi hoti
@@ -210,20 +271,24 @@ class _HomeScreenState extends State<HomeScreen> {
             0), //making the app bar with 0 height so that we cant see it as we dont need it
         child: AppBar(
           backgroundColor: Colors
-              .blue, //but doing this ie giving background colour to the AppBar widget also changes the colour of the status bar above so we change that to blue without creating appbar but using app bar widget and property
+              .black45, //by doing this ie giving background colour to the AppBar widget also changes the colour of the status bar above so we change that to blue without creating appbar but using app bar widget and property
         ),
       ),
       body: SingleChildScrollView(
         child: SafeArea(
             //taki phone me jo uper vali bar hoti h uske niche se aaye text as we dont want app bar here
             child: Container(
-          decoration: const BoxDecoration(
-              gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            // stops: [0.1, 0.9], //this means 0 to 10 % blue color then 10 to 90 % transition from blue to transparent and 90 to 100 % transparent
-            colors: [Colors.blue, Colors.transparent],
-          )),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              // stops: [0.1, 0.9], //this means 0 to 10 % blue color then 10 to 90 % transition from blue to transparent and 90 to 100 % transparent
+              colors: [Colors.blue, Colors.transparent],
+            ),
+            image: DecorationImage(
+                image: AssetImage("assets/images/$imageToShowInBG.jpg"),
+                fit: BoxFit.cover),
+          ),
           child: Column(
             children: [
               //1st container (search bar)
@@ -404,7 +469,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     //expanded iske aander ke child ko expand kar deta h iske parent ke main axis allignment ke hesab se(abhi to prent column h to ye iske aander vale container ko container ka main axis matlab vertically expand kar dega par ham horizontally chahte h to row se bind kr denge expanded ko)
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: Colors.white38,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.all(25),
@@ -433,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     fontWeight: FontWeight.bold,
                                   )),
                               Text(
-                                "in ${weatherInfo["cityName_val"]}",
+                                "in ${weatherInfo["cityName_val"]} (${weatherInfo["CCode_val"]})",
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w500),
                               )
@@ -450,7 +515,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             onTap: () {
                               Navigator.pushReplacementNamed(
                                   context, Loading.routeName, arguments: {
-                                "Text": weatherInfo["cityName_val"]
+                                "Text": weatherInfo["cityName_val"],
+                                "isfirst": false
                               });
                             },
                           )
@@ -467,7 +533,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     //expanded iske aander ke child ko expand kar deta h iske parent ke main axis allignment ke hesab se(abhi to prent column h to ye iske aander vale container ko container ka main axis matlab vertically expand kar dega par ham horizontally chahte h to row se bind kr denge expanded ko)
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: Colors.white38,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.all(25),
@@ -700,9 +766,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   padding: const EdgeInsets.only(top: 3),
                                   child: Text(
                                     "$temp °c",
-                                    style: TextStyle(
-                                      color: Colors.blue[900],
-                                      fontWeight: FontWeight.w700,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w900,
                                     ),
                                   ),
                                 ),
@@ -744,7 +810,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       // itemCount: weatherInfo["hourlytime_val"].length, //not working have to give the number
-                      itemCount: 24,
+                      itemCount:
+                          weatherInfo["temperature_val"] == "NA" ? 0 : 24,
                     ),
                   ))
                 ],
@@ -756,7 +823,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: Colors.white38,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.all(25),
@@ -766,12 +833,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: const [
-                              Icon(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Icon(
                                 WeatherIcons.windy,
-                                color: Colors.blueGrey,
-                              )
+                                color: Color.fromARGB(255, 57, 157, 206),
+                              ),
+                              Column(
+                                children: [
+                                  Text(
+                                    "(" +
+                                        weatherInfo["windDirection_val"] +
+                                        ")",
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                  Icon(windDir),
+                                ],
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -790,7 +868,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: Colors.white38,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.all(25),
@@ -868,6 +946,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     margin: const EdgeInsets.only(left: 30),
                     alignment: Alignment.bottomRight,
                     child: FloatingActionButton(
+                      backgroundColor: Colors.amber[500],
                       heroTag: "bt1",
                       onPressed: () {
                         showModalBottomSheet(
@@ -1008,12 +1087,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     );
                             });
                       },
-                      child: const Text("AQI"),
+                      child: const Text(
+                        "AQI",
+                        style: TextStyle(color: Colors.black54),
+                      ),
                     ),
                   ),
                   Container(
                     margin: const EdgeInsets.only(left: 40),
                     child: FloatingActionButton(
+                      backgroundColor: Colors.blueGrey[700],
                       heroTag:
                           "bt2", //if we use multiple floating action button then we have to use this tag to differentite both
                       onPressed: () {
@@ -1051,8 +1134,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                       },
                       child: !isFav
-                          ? const Icon(Icons.star_border_outlined)
-                          : const Icon(Icons.star_outlined),
+                          ? const Icon(
+                              Icons.star_border_outlined,
+                              color: Colors.orange,
+                            )
+                          : const Icon(
+                              Icons.star_outlined,
+                              color: Colors.orange,
+                            ),
                     ),
                   ),
                 ],
@@ -1086,7 +1175,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Text("Made By Abhay"),
+                    Text(
+                      "Made By Abhay",
+                      style: TextStyle(color: Colors.white54),
+                    ),
                     Icon(
                       Icons.favorite_rounded,
                       color: Colors.red,

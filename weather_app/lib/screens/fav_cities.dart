@@ -1,8 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -62,6 +58,7 @@ class _FavcitiesState extends State<Favcities> {
 
   @override
   Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size;
     // Map currentCity = ModalRoute.of(context)!.settings.arguments
     //     as Map; //getting current city from home to go back to it
     //if (!_isLoading) {
@@ -78,7 +75,10 @@ class _FavcitiesState extends State<Favcities> {
             return IconButton(
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, Loading.routeName,
-                      arguments: {"Text": widget.Currentcity});
+                      arguments: {
+                        "Text": widget.Currentcity,
+                        "isfirst": false
+                      });
                 },
                 icon: const Icon(Icons.arrow_back_ios_new_outlined));
           }),
@@ -90,8 +90,8 @@ class _FavcitiesState extends State<Favcities> {
             //to give gradient we can use flexible
             decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15)),
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30)),
                 gradient: LinearGradient(
                   colors: [Colors.black45, Colors.green],
                 )),
@@ -169,7 +169,7 @@ class _FavcitiesState extends State<Favcities> {
                                     height: MediaQuery.of(context).size.height,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10),
-                                    width: double.infinity,
+                                    width: screenSize.width,
                                     // decoration: BoxDecoration(
                                     //     //color: Colors.orange,
                                     //     gradient: LinearGradient(
@@ -233,7 +233,7 @@ class _FavcitiesState extends State<Favcities> {
                                                         width: 2,
                                                         color: Colors.white)),
                                               ),
-                                              width: 170,
+                                              width: screenSize.width * 0.45,
                                               child: Row(
                                                 children: [
                                                   Text(
@@ -282,6 +282,7 @@ class _FavcitiesState extends State<Favcities> {
                                                             //     .key
                                                             "Text": FavData.Fav[
                                                                 index], //as Fav gives us list of city names only and not the temp
+                                                            "isfirst": false
                                                           });
                                                     },
                                                     child: const Icon(
